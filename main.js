@@ -1,0 +1,165 @@
+const { Plugin, Notice, TFile, TFolder, Modal, Setting, PluginSettingTab, moment } = require('obsidian');
+const path = require('path');
+
+module.exports = class FileFlexPlugin extends Plugin {
+    async onload() {
+        this.history = [];
+        this.currentHistoryIndex = -1;
+        this.isUndoing = false;
+        this.isNotificationActive = false;
+        this.lastSuccessTimestamp = 0;
+
+        // Load settings
+        await this.loadSettings();
+
+        // Register event listeners for file operations
+        this.registerEvent(this.app.vault.on('rename', this.handleFileRename.bind(this)));
+
+        // Add ribbon icon and menu item for history navigation
+        const ribbonIconEl = this.addRibbonIcon('rotate-ccw', 'File Flex', async () => await this.undo());
+        ribbonIconEl.addClass('file-flex-ribbon-class');
+
+        // Register commands
+        this.addCommand({
+            id: 'file-flex-undo',
+            name: 'Undo',
+            callback: async () => await this.undo()
+        });
+
+        this.addCommand({
+            id: 'file-flex-clear-cache',
+            name: 'Clear Cache',
+            callback: async () => await this.clearCache()
+        });
+
+        // Add settings tab
+        this.addSettingTab(new FileFlexSettingTab(this.app, this));
+    }
+
+    async handleFileRename(file, oldPath) {
+        if (this.isUndoing) {
+            return;
+        }
+
+        const changeType = file.path.startsWith(oldPath.substring(0, oldPath.lastIndexOf('/') + 1)) ? 'rename' : 'move';
+        const now = Date.now();
+
+        // Filter out operations older than the time window
+        this.history = this.history.filter(op => now - op.timestamp <= this.settings.timeWindow * 1000);
+
+        // Create or update the batch operation
+        let existingOperation = this.history.find(op => op.timestamp + this.settings.timeWindow * 1000 > now && op.type === changeType);
+        if (!existingOperation) {
+            existingOperation = {
+                type: changeType,
+                files: [],
+                timestamp: now
+            };
+            this.history.push(existingOperation);
+            this.currentHistoryIndex = this.history.length - 1;
+        }
+
+        existingOperation.files.push({ file, oldPath, newPath: file.path });
+        console.log(`Tracked operation: ${changeType} - ${file.path} from ${oldPath}`);
+    }
+
+    async undo() {
+        const now = Date.now();
+
+        // Check if the history is empty or if the latest operation is older than the time window
+        if (this.currentHistoryIndex < 0 || now - this.history[this.currentHistoryIndex].timestamp > this.settings.timeWindow * 1000) {
+            return;
+        }
+
+        const operation = this.history[this.currentHistoryIndex];
+
+        this.isUndoing = true;
+
+        for (const fileOp of operation.files) {
+            const file = this.app.vault.getAbstractFileByPath(fileOp.newPath);
+            if (file) {
+                try {
+                    await this.app.vault.rename(file, fileOp.oldPath);
+                    console.log(`Successfully moved ${fileOp.newPath} to ${fileOp.oldPath}`);
+                } catch (error) {
+                    console.error(`Error moving ${fileOp.newPath} to ${fileOp.oldPath}:`, error);
+                }
+            } else {
+                console.error(`File ${fileOp.newPath} not found for undo`);
+            }
+        }
+
+        this.history.pop();
+        this.currentHistoryIndex = this.history.length - 1;
+        this.isUndoing = false;
+
+        new Notice(`File Flex\n---\n'Undo' successful`);
+    }
+
+    async clearCache() {
+        this.history = [];
+        this.currentHistoryIndex = -1;
+        new Notice('File Flex cache cleared');
+    }
+
+    async loadSettings() {
+        this.settings = Object.assign({}, {
+            timeWindow: 10 // Default time window value in seconds
+        }, await this.loadData());
+    }
+
+    async saveSettings() {
+        await this.saveData(this.settings);
+    }
+}
+
+class FileFlexSettingTab extends PluginSettingTab {
+    constructor(app, plugin) {
+        super(app, plugin);
+        this.plugin = plugin;
+    }
+
+    display() {
+        const { containerEl } = this;
+        containerEl.empty();
+
+        // Add the Ko-fi button
+        const koFiButton = containerEl.createEl('a', { href: 'https://ko-fi.com/I2I2ZHYPA', target: '_blank' });
+        koFiButton.innerHTML = "<img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi2.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' />";
+        koFiButton.style.display = 'block';
+        koFiButton.style.textAlign = 'center';
+        containerEl.createEl('hr');
+
+        const title = containerEl.createEl('h1', { text: 'File Flex Settings' });
+        title.style.textAlign = 'center';
+
+        new Setting(containerEl)
+            .setName('Time Window')
+            .setDesc('Set the time window (between 3 and 3600 seconds) for undo operations. Lower time windows are better suited for vaults with more frequent file / folder name and location changes.')
+            .addSlider(slider => slider
+                .setLimits(3, 3600, 1)
+                .setValue(this.plugin.settings.timeWindow)
+                .onChange(async (value) => {
+                    this.plugin.settings.timeWindow = value;
+                    await this.plugin.saveSettings();
+                })
+                .setDynamicTooltip());
+
+        containerEl.createEl('p', { text: `${this.plugin.settings.timeWindow} seconds` });
+
+        new Setting(containerEl)
+            .setName('Clear Cache')
+            .setDesc('Clear the File Flex cache. Useful if you set a long Time Window and want to clear old operations.')
+            .addButton(button => button
+                .setButtonText('Clear Cache')
+                .onClick(async () => {
+                    await this.plugin.clearCache();
+                }));
+
+        containerEl.createEl('hr');
+
+        containerEl.createEl('p', { text: 'GitHub Repository: ' });
+        const link = containerEl.createEl('a', { href: 'https://github.com/19msb/obsidian-file-flex', text: 'https://github.com/19msb/obsidian-file-flex' });
+        link.style.display = 'block';
+    }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "file-flex",
+  "version": "0.1.0",
+  "description": "Undo file and folder operations",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "obsidian",
+    "plugin",
+    "undo",
+    "file",
+    "folder"
+  ],
+  "author": "Michael Baker",
+  "license": "MIT",
+  "devDependencies": {
+    "obsidian": "^1.5.7-1"
+  }
+}

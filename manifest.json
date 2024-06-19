@@ -1,0 +1,11 @@
+{
+  "id": "file-flex",
+  "name": "File Flex",
+  "version": "0.1.0",
+  "minAppVersion": "0.12.0",
+  "description": "Undo file and folder operations",
+  "author": "Michael Baker",
+  "authorUrl": "https://forum.obsidian.md/u/mistba/summary",
+  "fundingUrl": "https://ko-fi.com/mistba",
+  "isDesktopOnly": false
+}
