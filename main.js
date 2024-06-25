@@ -149,12 +149,11 @@ class FileFlexSettingTab extends PluginSettingTab {
             }
         `;
         document.head.appendChild(style);
-
+        
         // Time Window setting
         const sliderContainer = containerEl.createDiv({ cls: 'file-flex-slider-container' });
 
-        const sliderCount = sliderContainer.createDiv({ cls: 'file-flex-slider-count' });
-        const sliderValueDisplay = sliderCount.createEl('span', { text: `${this.plugin.settings.timeWindow} seconds` });
+        // Removed the sliderValueDisplay creation from here
 
         const sliderSetting = new Setting(sliderContainer)
             .setName('Time window')
@@ -165,11 +164,21 @@ class FileFlexSettingTab extends PluginSettingTab {
                     .setValue(this.plugin.settings.timeWindow)
                     .onChange(async (value) => {
                         this.plugin.settings.timeWindow = value;
+                        // Update the sliderValueDisplay text here instead of creating it
                         sliderValueDisplay.textContent = `${value} seconds`;
                         await this.plugin.saveSettings();
-                    });
+                    })
+                    .setDynamicTooltip();
                 slider.sliderEl.addClass('file-flex-slider');
             });
+
+        // Create the sliderValueDisplay here, under the Time Window section and above the Clear Cache setting
+        const sliderValueDisplay = document.createElement('span');
+        sliderValueDisplay.textContent = `${this.plugin.settings.timeWindow} seconds`;
+        sliderValueDisplay.style.display = "block"; 
+        sliderValueDisplay.style.textAlign = "left";
+        sliderValueDisplay.style.marginBottom = "1em"; 
+        containerEl.insertBefore(sliderValueDisplay, containerEl.querySelector('hr'));
 
         // Clear Cache setting
         new Setting(containerEl)
