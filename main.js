@@ -139,14 +139,12 @@ class FileFlexSettingTab extends PluginSettingTab {
                 flex-direction: column;
                 align-items: center;
                 width: 100%;
+                margin-bottom: 1em;
             }
             .file-flex-slider {
                 width: 80%;
             }
             .file-flex-slider-count {
-                display: flex;
-                justify-content: space-between;
-                width: 80%;
                 margin-bottom: 1em;
             }
         `;
@@ -158,7 +156,7 @@ class FileFlexSettingTab extends PluginSettingTab {
         const sliderCount = sliderContainer.createDiv({ cls: 'file-flex-slider-count' });
         const sliderValueDisplay = sliderCount.createEl('span', { text: `${this.plugin.settings.timeWindow} seconds` });
 
-        const slider = new Setting(sliderContainer)
+        const sliderSetting = new Setting(sliderContainer)
             .setName('Time window')
             .setDesc('Set the time window (between 3 seconds and 1 minute) for undo operations. Smaller time windows are better for vaults with more frequent file / folder name and location changes.')
             .addSlider(slider => {
@@ -172,9 +170,6 @@ class FileFlexSettingTab extends PluginSettingTab {
                     });
                 slider.sliderEl.addClass('file-flex-slider');
             });
-
-        sliderContainer.appendChild(slider.sliderEl);
-        sliderCount.appendChild(sliderValueDisplay);
 
         // Clear Cache setting
         new Setting(containerEl)
