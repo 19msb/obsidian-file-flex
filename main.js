@@ -202,6 +202,6 @@ class FileFlexSettingTab extends PluginSettingTab {
             }
         });
         koFiButton.style.display = 'block';
-        koFiButton.style.textAlign = 'center';
+        koFiButton.style.textAlign = 'left';
     }
 }
