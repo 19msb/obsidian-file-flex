@@ -18,7 +18,9 @@ File Flex is an Obsidian plugin that enhances file and folder management by prov
 4. Move the contents into `/your-vault/.obsidian/plugins/obsidian-file-flex/`.
 5. Enable the plugin in Obsidian:
    - Open Obsidian, go to **Settings > Community Plugins**.
-   - Click on **Browse**, search for **File Flex**, and enable it.
+   - Make sure **Restricted mode** is off.
+   - **Search installed plugins** for **File Flex**
+   - Click **Enable**
 
 ### From within Obsidian
 
