@@ -10,15 +10,26 @@ File Flex is an Obsidian plugin that enhances file and folder management by prov
 
 ## Installation
 
-1. Download the latest release from the [GitHub releases page](https://github.com/19msb/obsidian-file-flex/releases).
-2. Extract the downloaded zip file.
-3. Move the extracted folder to your Obsidian plugins folder:
-   - On Windows: `%APPDATA%/Roaming/obsidian/plugins`
-   - On macOS: `~/Library/Application Support/obsidian/plugins`
-   - On Linux: `~/.config/obsidian/plugins`
-4. Enable the plugin in Obsidian:
-   - Open Obsidian, go to Settings > Community Plugins.
-   - Click on `Browse`, search for `File Flex`, and enable it.
+### From GitHub
+
+1. Go to the [Releases page](https://github.com/19msb/obsidian-file-flex/releases).
+2. Download the latest `Obsidian-File-Flex-${version}.zip`.
+3. Extract its contents.
+4. Move the contents into `/your-vault/.obsidian/plugins/obsidian-file-flex/`.
+5. Enable the plugin in Obsidian:
+   - Open Obsidian, go to **Settings > Community Plugins**.
+   - Click on **Browse**, search for **File Flex**, and enable it.
+
+### From within Obsidian
+
+You can install this plugin within Obsidian by doing the following:
+
+1. Open **Settings > Community plugins**.
+2. Make sure **Restricted mode** is off.
+3. Click **Browse**.
+4. Search for **File Flex**.
+5. Click **Install**.
+6. Once, installed click **Enable**.
 
 ## Usage
 

@@ -187,6 +187,9 @@ class FileFlexSettingTab extends PluginSettingTab {
         const link = containerEl.createEl('a', { href: 'https://github.com/19msb/obsidian-file-flex', text: 'https://github.com/19msb/obsidian-file-flex' });
         link.style.display = 'block';
 
+        containerEl.createEl('hr');
+        
+        containerEl.createEl('p', { text: ' If you find this plugin useful and would like to support its development, you can buy me a coffee:' });    
         // Add the Ko-fi button at the end
         const koFiButton = containerEl.createEl('a', { href: 'https://ko-fi.com/I2I2ZHYPA', target: '_blank' });
         koFiButton.createEl('img', {
