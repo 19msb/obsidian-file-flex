@@ -37,11 +37,11 @@ module.exports = class FileFlexPlugin extends Plugin {
     }
 
     async handleFileRename(file, oldPath) {
-        if (this.isUndoing) {
-            return;
-        }
+        if (this.isUndoing) return;
 
-        const changeType = file.path.startsWith(oldPath.substring(0, oldPath.lastIndexOf('/') + 1)) ? 'rename' : 'move';
+        const newPath = file.path;
+        const changeType = newPath.startsWith(oldPath.substring(0, oldPath.lastIndexOf('/') + 1)) ? 'rename' : 'move';
+        const itemType = file instanceof TFolder ? 'folder' : 'file';
         const now = Date.now();
 
         // Filter out operations older than the time window
@@ -59,7 +59,7 @@ module.exports = class FileFlexPlugin extends Plugin {
             this.currentHistoryIndex = this.history.length - 1;
         }
 
-        existingOperation.files.push({ file, oldPath, newPath: file.path });
+        existingOperation.files.push({ itemType, file, oldPath, newPath });
 
         // Log only during development
         if (process.env.NODE_ENV === 'development') {
@@ -68,37 +68,30 @@ module.exports = class FileFlexPlugin extends Plugin {
     }
 
     async undo() {
-        const now = Date.now();
-
-        // Check if the history is empty or if the latest operation is older than the time window
-        if (this.currentHistoryIndex < 0 || now - this.history[this.currentHistoryIndex].timestamp > this.settings.timeWindow * 1000) {
-            return;
-        }
+        if (this.currentHistoryIndex < 0) return;
 
         const operation = this.history[this.currentHistoryIndex];
-
         this.isUndoing = true;
 
-        for (const fileOp of operation.files) {
-            const file = this.app.vault.getAbstractFileByPath(fileOp.newPath);
-            if (file) {
+        for (const { itemType, file, oldPath, newPath } of operation.files) {
+            const target = this.app.vault.getAbstractFileByPath(newPath);
+            if (target) {
                 try {
-                    await this.app.vault.rename(file, fileOp.oldPath);
-
-                    // Log only during development
+                    await this.app.vault.rename(target, oldPath);
+                    // Log success for both files and folders
                     if (process.env.NODE_ENV === 'development') {
-                        console.log(`Successfully moved ${fileOp.newPath} to ${fileOp.oldPath}`);
+                        console.log(`Successfully moved ${itemType} ${newPath} to ${oldPath}`);
                     }
                 } catch (error) {
-                    console.error(`Error moving ${fileOp.newPath} to ${fileOp.oldPath}:`, error);
+                    console.error(`Error moving ${itemType} ${newPath} to ${oldPath}:`, error);
                 }
             } else {
-                console.error(`File ${fileOp.newPath} not found for undo`);
+                console.error(`${itemType.charAt(0).toUpperCase() + itemType.slice(1)} ${newPath} not found for undo`);
             }
         }
 
         this.history.pop();
-        this.currentHistoryIndex = this.history.length - 1;
+        this.currentHistoryIndex--;
         this.isUndoing = false;
 
         new Notice(`File Flex\n---\n'Undo' successful`);
@@ -147,13 +140,26 @@ class FileFlexSettingTab extends PluginSettingTab {
             .file-flex-slider-count {
                 margin-bottom: 1em;
             }
+            /* Increase the size of the slider thumb */
+            .slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 25px; /* Increase width for easier grabbing */
+                height: 25px; /* Increase height for easier grabbing */
+                background: #4CAF50; /* Example background color */
+                cursor: pointer; /* Change cursor to indicate it's draggable */
+                border-radius: 50%; /* Optional: makes the thumb circular */
+            }
+
+            /* Increase the clickable area around the thumb using padding (alternative approach) */
+            .slider-thumb-wrapper {
+                padding: 10px; /* Adds space around the thumb for easier clicking */
+            }
         `;
         document.head.appendChild(style);
         
         // Time Window setting
         const sliderContainer = containerEl.createDiv({ cls: 'file-flex-slider-container' });
-
-        // Removed the sliderValueDisplay creation from here
 
         const sliderSetting = new Setting(sliderContainer)
             .setName('Time window')
@@ -164,7 +170,6 @@ class FileFlexSettingTab extends PluginSettingTab {
                     .setValue(this.plugin.settings.timeWindow)
                     .onChange(async (value) => {
                         this.plugin.settings.timeWindow = value;
-                        // Update the sliderValueDisplay text here instead of creating it
                         sliderValueDisplay.textContent = `${value} seconds`;
                         await this.plugin.saveSettings();
                     })
