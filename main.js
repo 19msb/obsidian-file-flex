@@ -28,7 +28,7 @@ module.exports = class FileFlexPlugin extends Plugin {
 
         this.addCommand({
             id: 'file-flex-clear-cache',
-            name: 'Clear Cache',
+            name: 'Clear cache',
             callback: async () => await this.clearCache()
         });
 
@@ -60,7 +60,11 @@ module.exports = class FileFlexPlugin extends Plugin {
         }
 
         existingOperation.files.push({ file, oldPath, newPath: file.path });
-        console.log(`Tracked operation: ${changeType} - ${file.path} from ${oldPath}`);
+
+        // Log only during development
+        if (process.env.NODE_ENV === 'development') {
+            console.log(`Tracked operation: ${changeType} - ${file.path} from ${oldPath}`);
+        }
     }
 
     async undo() {
@@ -80,7 +84,11 @@ module.exports = class FileFlexPlugin extends Plugin {
             if (file) {
                 try {
                     await this.app.vault.rename(file, fileOp.oldPath);
-                    console.log(`Successfully moved ${fileOp.newPath} to ${fileOp.oldPath}`);
+
+                    // Log only during development
+                    if (process.env.NODE_ENV === 'development') {
+                        console.log(`Successfully moved ${fileOp.newPath} to ${fileOp.oldPath}`);
+                    }
                 } catch (error) {
                     console.error(`Error moving ${fileOp.newPath} to ${fileOp.oldPath}:`, error);
                 }
@@ -123,18 +131,8 @@ class FileFlexSettingTab extends PluginSettingTab {
         const { containerEl } = this;
         containerEl.empty();
 
-        // Add the Ko-fi button
-        const koFiButton = containerEl.createEl('a', { href: 'https://ko-fi.com/I2I2ZHYPA', target: '_blank' });
-        koFiButton.innerHTML = "<img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi2.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' />";
-        koFiButton.style.display = 'block';
-        koFiButton.style.textAlign = 'center';
-        containerEl.createEl('hr');
-
-        const title = containerEl.createEl('h1', { text: 'File Flex Settings' });
-        title.style.textAlign = 'center';
-
         new Setting(containerEl)
-            .setName('Time Window')
+            .setName('Time window')
             .setDesc('Set the time window (between 3 and 3600 seconds) for undo operations. Lower time windows are better suited for vaults with more frequent file / folder name and location changes.')
             .addSlider(slider => slider
                 .setLimits(3, 3600, 1)
@@ -148,10 +146,10 @@ class FileFlexSettingTab extends PluginSettingTab {
         containerEl.createEl('p', { text: `${this.plugin.settings.timeWindow} seconds` });
 
         new Setting(containerEl)
-            .setName('Clear Cache')
+            .setName('Clear cache')
             .setDesc('Clear the File Flex cache. Useful if you set a long Time Window and want to clear old operations.')
             .addButton(button => button
-                .setButtonText('Clear Cache')
+                .setButtonText('Clear cache')
                 .onClick(async () => {
                     await this.plugin.clearCache();
                 }));
@@ -161,5 +159,19 @@ class FileFlexSettingTab extends PluginSettingTab {
         containerEl.createEl('p', { text: 'GitHub Repository: ' });
         const link = containerEl.createEl('a', { href: 'https://github.com/19msb/obsidian-file-flex', text: 'https://github.com/19msb/obsidian-file-flex' });
         link.style.display = 'block';
+
+        // Add the Ko-fi button at the end
+        const koFiButton = containerEl.createEl('a', { href: 'https://ko-fi.com/I2I2ZHYPA', target: '_blank' });
+        koFiButton.createEl('img', {
+            attr: {
+                height: '36',
+                style: 'border:0px;height:36px;',
+                src: 'https://storage.ko-fi.com/cdn/kofi2.png?v=3',
+                border: '0',
+                alt: 'Buy Me a Coffee at ko-fi.com'
+            }
+        });
+        koFiButton.style.display = 'block';
+        koFiButton.style.textAlign = 'center';
     }
 }
