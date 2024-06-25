@@ -131,23 +131,55 @@ class FileFlexSettingTab extends PluginSettingTab {
         const { containerEl } = this;
         containerEl.empty();
 
-        new Setting(containerEl)
+        // Add custom CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            .file-flex-slider-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                width: 100%;
+            }
+            .file-flex-slider {
+                width: 80%;
+            }
+            .file-flex-slider-count {
+                display: flex;
+                justify-content: space-between;
+                width: 80%;
+                margin-bottom: 1em;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Time Window setting
+        const sliderContainer = containerEl.createDiv({ cls: 'file-flex-slider-container' });
+
+        const sliderCount = sliderContainer.createDiv({ cls: 'file-flex-slider-count' });
+        const sliderValueDisplay = sliderCount.createEl('span', { text: `${this.plugin.settings.timeWindow} seconds` });
+
+        const slider = new Setting(sliderContainer)
             .setName('Time window')
-            .setDesc('Set the time window (between 3 and 3600 seconds) for undo operations. Lower time windows are better suited for vaults with more frequent file / folder name and location changes.')
-            .addSlider(slider => slider
-                .setLimits(3, 3600, 1)
-                .setValue(this.plugin.settings.timeWindow)
-                .onChange(async (value) => {
-                    this.plugin.settings.timeWindow = value;
-                    await this.plugin.saveSettings();
-                })
-                .setDynamicTooltip());
+            .setDesc('Set the time window (between 3 seconds and 1 minute) for undo operations. Smaller time windows are better for vaults with more frequent file / folder name and location changes.')
+            .addSlider(slider => {
+                slider
+                    .setLimits(3, 60, 1)
+                    .setValue(this.plugin.settings.timeWindow)
+                    .onChange(async (value) => {
+                        this.plugin.settings.timeWindow = value;
+                        sliderValueDisplay.textContent = `${value} seconds`;
+                        await this.plugin.saveSettings();
+                    });
+                slider.sliderEl.addClass('file-flex-slider');
+            });
 
-        containerEl.createEl('p', { text: `${this.plugin.settings.timeWindow} seconds` });
+        sliderContainer.appendChild(slider.sliderEl);
+        sliderCount.appendChild(sliderValueDisplay);
 
+        // Clear Cache setting
         new Setting(containerEl)
             .setName('Clear cache')
-            .setDesc('Clear the File Flex cache. Useful if you set a long Time Window and want to clear old operations.')
+            .setDesc('Clear the File Flex cache. Useful if you want to prevent undo of old operations.')
             .addButton(button => button
                 .setButtonText('Clear cache')
                 .onClick(async () => {
