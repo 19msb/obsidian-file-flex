@@ -31,7 +31,7 @@ You can install this plugin within Obsidian by doing the following:
 3. Click **Browse**.
 4. Search for **File Flex**.
 5. Click **Install**.
-6. Once, installed click **Enable**.
+6. Once installed, click **Enable**.
 
 ## Usage
 
